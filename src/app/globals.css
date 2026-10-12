@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/*
+ * Thème clair unique : les boutiques sont souvent très éclairées
+ * et un fort contraste reste lisible en plein soleil.
+ */
+:root {
+  --background: #f5f6f4;
+  --surface: #ffffff;
+  --foreground: #111827;
+  --muted: #4b5563;
+  --border: #d1d5db;
+  --brand: #0f6b4f;
+  --brand-strong: #0a5039;
+  --brand-soft: #d9efe6;
+  --debt: #b42318;
+  --debt-soft: #fde8e7;
+  --repayment: #067647;
+  --repayment-soft: #dcfae6;
+  --focus: #f5b83d;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-debt: var(--debt);
+  --color-debt-soft: var(--debt-soft);
+  --color-repayment: var(--repayment);
+  --color-repayment-soft: var(--repayment-soft);
+  --color-focus: var(--focus);
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html {
+  color-scheme: light;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Chiffres alignés pour les montants */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
