@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { fetchAll } from "@/lib/supabase/fetch-all";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables, Views } from "@/lib/supabase/database.types";
 import { fetchTransactions } from "./ledger";
@@ -14,20 +15,20 @@ export type CustomerListItem = Pick<
   "customer_id" | "name" | "phone" | "balance" | "last_transaction_at"
 >;
 
-/** Limite de la liste chargée d'un coup (recherche instantanée côté client). */
-export const CUSTOMER_LIST_LIMIT = 5000;
-
+/** Tous les clients actifs (chargés en entier pour la recherche instantanée côté client). */
 export async function listCustomers(shopId: string): Promise<CustomerListItem[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("customer_balances")
-    .select("customer_id, name, phone, balance, last_transaction_at")
-    .eq("shop_id", shopId)
-    .is("archived_at", null)
-    .order("name")
-    .limit(CUSTOMER_LIST_LIMIT);
-  if (error) throw error;
-  return data.map((c) => ({ ...c, balance: Number(c.balance) }));
+  const rows = await fetchAll((from, to) =>
+    supabase
+      .from("customer_balances")
+      .select("customer_id, name, phone, balance, last_transaction_at")
+      .eq("shop_id", shopId)
+      .is("archived_at", null)
+      .order("name")
+      .order("customer_id")
+      .range(from, to),
+  );
+  return rows.map((c) => ({ ...c, balance: Number(c.balance) }));
 }
 
 export type CustomerDetail = Tables<"customers"> & { balance: number };

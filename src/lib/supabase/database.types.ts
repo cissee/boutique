@@ -208,6 +208,19 @@ export type Database = {
           debts_today_count: number;
         }[];
       };
+      shop_report: {
+        Args: { p_shop_id: string; p_from: string; p_to: string };
+        Returns: {
+          debts_total: number;
+          debts_count: number;
+          repayments_total: number;
+          repayments_count: number;
+          repayments_by_method: Json;
+          reversals_count: number;
+          new_customers: number;
+          outstanding_end: number;
+        }[];
+      };
       reverse_transaction: {
         Args: { p_transaction_id: string; p_reason: string; p_client_request_id: string };
         Returns: LedgerRow;

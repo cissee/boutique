@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArchiveCustomerButton } from "@/components/customers/archive-customer-button";
+import { StatementActions } from "@/components/customers/statement-actions";
 import { PlusIcon, WalletIcon } from "@/components/icons";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { balanceTone, Money } from "@/components/ui/money";
@@ -93,6 +94,7 @@ export default async function CustomerPage({ params }: PageProps<"/customers/[id
         <Link href={`/customers/${customer.id}/edit`} className={pill}>
           {t.customers.edit}
         </Link>
+        <StatementActions customerId={customer.id} shopName={shop.name} className={pill} />
       </div>
 
       {customer.notes && (

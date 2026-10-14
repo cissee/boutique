@@ -341,6 +341,57 @@ describe("tableau de bord (shop_dashboard)", () => {
   });
 });
 
+describe("rapport de période (shop_report)", () => {
+  const report = async (userId: string, shopId: string, from: string, to: string) => {
+    const [row] = await db.as<Record<string, unknown>>(userId, "select * from public.shop_report($1, $2, $3)", [
+      shopId,
+      from,
+      to,
+    ]);
+    return row;
+  };
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+
+  it("totaux de la période, remboursements par mode, annulations exclues", async () => {
+    const { owner, seller, shopId, customerId } = await setupShop();
+    // Avant la période : dette de 1 000 il y a 10 jours.
+    await db.as(seller, "select public.record_debt($1, 1000, gen_random_uuid(), null, now() - interval '10 days')", [
+      customerId,
+    ]);
+    await db.debt(seller, customerId, 5000);
+    await db.repay(seller, customerId, 2000); // CASH
+    await db.as(seller, "select public.record_repayment($1, 500, gen_random_uuid(), 'WAVE')", [customerId]);
+    const mistaken = await db.debt(seller, customerId, 700);
+    await db.reverse(owner, mistaken.id);
+
+    const r = await report(owner, shopId, day(-2), day(0));
+    expect(Number(r.debts_total)).toBe(5000);
+    expect(Number(r.debts_count)).toBe(1);
+    expect(Number(r.repayments_total)).toBe(2500);
+    expect(Number(r.repayments_count)).toBe(2);
+    expect(r.repayments_by_method).toEqual({ CASH: 2000, WAVE: 500 });
+    expect(Number(r.reversals_count)).toBe(1);
+    expect(Number(r.new_customers)).toBe(1);
+    expect(Number(r.outstanding_end)).toBe(1000 + 5000 - 2500);
+  });
+
+  it("le solde de fin de période ignore les opérations postérieures", async () => {
+    const { owner, seller, shopId, customerId } = await setupShop();
+    await db.as(seller, "select public.record_debt($1, 1000, gen_random_uuid(), null, now() - interval '10 days')", [
+      customerId,
+    ]);
+    await db.debt(seller, customerId, 5000);
+    const r = await report(owner, shopId, day(-20), day(-5));
+    expect(Number(r.outstanding_end)).toBe(1000);
+    expect(Number(r.debts_total)).toBe(1000);
+  });
+
+  it("refuse une période inversée", async () => {
+    const { owner, shopId } = await setupShop();
+    await expect(report(owner, shopId, day(0), day(-1))).rejects.toThrow("invalid_date");
+  });
+});
+
 describe("isolation entre boutiques", () => {
   it("un utilisateur ne voit ni les clients, ni les transactions, ni les soldes d'une autre boutique", async () => {
     const a = await setupShop();

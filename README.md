@@ -112,6 +112,7 @@ Après une nouvelle migration, régénérer les types TypeScript : `npx supabase
 | `audit_log` | Journal des opérations sensibles, lisible par le propriétaire |
 | vue `customer_balances` | Solde = `SUM(balance_effect)` du registre |
 | fonction `shop_dashboard` | Indicateurs du tableau de bord, calculés depuis le registre (RLS appliquée) |
+| fonction `shop_report` | Rapport d'une période : dettes, remboursements par mode, encours de fin de période |
 
 Les écritures financières passent **uniquement** par les fonctions PostgreSQL `record_debt`, `record_repayment` et `reverse_transaction`. Elles sont atomiques, idempotentes grâce à `client_request_id` et verrouillent la ligne du client. Le navigateur n'a aucun droit d'écriture directe sur le registre.
 
@@ -168,5 +169,6 @@ Les textes sont regroupés dans [src/i18n/messages/fr.ts](src/i18n/messages/fr.t
 - [x] Étape 7 : dettes, remboursements, annulations (interface)
 - [x] Étape 8 : tableau de bord
 - [x] Étape 9 : historique filtrable, tests de concurrence, documentation
-- [ ] Étape 10 : déploiement Vercel
-- [ ] Ensuite : rapports, relevé client PDF, export des données, gestion des vendeurs, mode hors ligne
+- [ ] Étape 10 : déploiement Vercel (en attente)
+- [x] Étape 11 : rapports par période, export CSV (opérations, clients), relevé client PDF partageable
+- [ ] Ensuite : gestion des vendeurs (invitations), mode hors ligne (PWA), wolof

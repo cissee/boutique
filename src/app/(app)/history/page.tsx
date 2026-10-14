@@ -6,6 +6,7 @@ import { TransactionList } from "@/components/transactions/transaction-list";
 import { getMessages } from "@/i18n";
 import { requireShop } from "@/lib/auth/session";
 import { todayISODate } from "@/lib/format/date";
+import { isoDate, periodPresets } from "@/lib/periods";
 import type { Enums } from "@/lib/supabase/database.types";
 import { getCustomer, isUuid } from "@/server/queries/customers";
 import { queryTransactions } from "@/server/queries/ledger";
@@ -28,10 +29,7 @@ type Filters = {
 /** Les paramètres d'URL sont validés : une valeur invalide est simplement ignorée. */
 function parseFilters(params: Record<string, string | string[] | undefined>): Filters {
   const one = (key: string) => (typeof params[key] === "string" ? (params[key] as string) : undefined);
-  const date = (key: string) => {
-    const v = one(key);
-    return v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined;
-  };
+  const date = (key: string) => isoDate(params[key]);
   const type = one("type");
   const customer = one("customer");
   const page = Number(one("page"));
@@ -53,12 +51,6 @@ function historyHref(filters: Partial<Filters>): string {
   return qs ? `/history?${qs}` : "/history";
 }
 
-function daysAgo(days: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - days);
-  return todayISODate(d);
-}
-
 export default async function HistoryPage({ searchParams }: PageProps<"/history">) {
   const { shop, role } = await requireShop();
   const filters = parseFilters(await searchParams);
@@ -78,10 +70,11 @@ export default async function HistoryPage({ searchParams }: PageProps<"/history"
   ]);
 
   const base = { type: filters.type, customer: filters.customer };
+  const presets = periodPresets();
   const periods = [
-    { label: t.history.today, from: today, to: today },
-    { label: t.history.last7, from: daysAgo(6), to: today },
-    { label: t.history.last30, from: daysAgo(29), to: today },
+    { label: t.history.today, ...presets.today },
+    { label: t.history.last7, ...presets.last7 },
+    { label: t.history.last30, ...presets.last30 },
     { label: t.history.allTime, from: undefined, to: undefined },
   ];
 
