@@ -1,5 +1,8 @@
-/** Pages accessibles sans être connecté. */
-export const PUBLIC_PATHS = ["/", "/login", "/signup", "/forgot-password"];
+/**
+ * Pages accessibles sans être connecté. /offline ne contient aucune donnée :
+ * elle lit uniquement le stockage local du téléphone.
+ */
+export const PUBLIC_PATHS = ["/", "/login", "/signup", "/forgot-password", "/offline"];
 
 /** Pages réservées aux visiteurs non connectés (redirigés vers l'application sinon). */
 export const GUEST_ONLY_PATHS = ["/", "/login", "/signup"];

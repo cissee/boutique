@@ -2,6 +2,7 @@
 
 import { useId, type InputHTMLAttributes, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
+import { useOffline } from "next/offline";
 import { getMessages } from "@/i18n";
 
 const t = getMessages();
@@ -111,6 +112,7 @@ export function SubmitButton({
 }) {
   const status = useFormStatus();
   const pending = pendingOverride ?? status.pending;
+  const isOffline = useOffline();
   const colors =
     variant === "danger"
       ? "border-2 border-debt bg-surface text-debt"
@@ -122,7 +124,7 @@ export function SubmitButton({
       aria-disabled={pending || disabled}
       className={`flex min-h-14 w-full items-center justify-center rounded-xl px-6 text-lg font-semibold disabled:opacity-60 ${colors}`}
     >
-      {pending ? t.common.loading : children}
+      {pending ? (isOffline ? t.offline.waiting : t.common.loading) : children}
     </button>
   );
 }

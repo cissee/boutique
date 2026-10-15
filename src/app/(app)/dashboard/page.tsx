@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ChevronRightIcon, PlusIcon, WalletIcon } from "@/components/icons";
+import { SnapshotSaver } from "@/components/pwa/snapshot-saver";
+import { toSnapshotCustomers } from "@/lib/offline/snapshot";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { Money } from "@/components/ui/money";
 import { getMessages } from "@/i18n";
 import { requireShop } from "@/lib/auth/session";
 import { getDashboardStats, getTopDebtors } from "@/server/queries/dashboard";
+import { listCustomers } from "@/server/queries/customers";
 import { fetchTransactions } from "@/server/queries/ledger";
 
 const t = getMessages();
@@ -16,15 +19,23 @@ export const metadata: Metadata = { title: t.nav.dashboard };
 const RECENT_LIMIT = 8;
 
 export default async function DashboardPage() {
-  const { shop } = await requireShop();
-  const [stats, topDebtors, recent] = await Promise.all([
+  const { shop, user } = await requireShop();
+  const [stats, topDebtors, recent, customers] = await Promise.all([
     getDashboardStats(shop.id),
     getTopDebtors(shop.id),
     fetchTransactions({ shopId: shop.id, limit: RECENT_LIMIT }),
+    // Liste complète : copie locale pour la consultation hors ligne.
+    listCustomers(shop.id),
   ]);
 
   return (
     <div className="flex flex-col gap-6">
+      <SnapshotSaver
+        userId={user.id}
+        shopId={shop.id}
+        shopName={shop.name}
+        customers={toSnapshotCustomers(customers)}
+      />
       <header>
         <p className="text-sm font-medium text-muted">{t.nav.dashboard}</p>
         <h1 className="text-2xl font-bold break-words">{shop.name}</h1>

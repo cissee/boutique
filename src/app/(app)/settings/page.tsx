@@ -4,12 +4,11 @@ import type { ReactNode } from "react";
 import { ProfileForm } from "@/components/forms/profile-form";
 import { ShopForm } from "@/components/forms/shop-form";
 import { PageHeader } from "@/components/layout/page-header";
+import { LogoutButton } from "@/components/pwa/logout-button";
 import { TeamSection } from "@/components/team/team-section";
-import { SubmitButton } from "@/components/ui/form";
 import { getMessages } from "@/i18n";
 import { getProfile, listMyShops, requireShop } from "@/lib/auth/session";
 import { updateShop } from "@/server/actions/account";
-import { signOut } from "@/server/actions/auth";
 import { switchShop } from "@/server/actions/team";
 
 const t = getMessages();
@@ -75,9 +74,7 @@ export default async function SettingsPage() {
           >
             {t.auth.resetTitle}
           </Link>
-          <form action={signOut}>
-            <SubmitButton variant="danger">{t.auth.logout}</SubmitButton>
-          </form>
+          <LogoutButton />
         </Section>
       </div>
     </>

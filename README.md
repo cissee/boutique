@@ -24,12 +24,13 @@ npm run dev                     # http://localhost:3000
 | `npm run typecheck` | Vérification TypeScript |
 | `npm test` | Tests unitaires et tests base de données (PGlite, sans réseau) |
 | `npm run test:integration` | Tests de concurrence contre le vrai projet Supabase |
+| `npm run test:e2e` | Tests navigateur (Chromium mobile) sur le build de production : mode hors ligne |
 | `npm run check` | Lint, types, tests et build : à lancer avant chaque commit |
 | `npm run db:types` | Régénère les types TypeScript de la base (après `npx supabase login`) |
 
 ## Tests
 
-Trois niveaux, du plus rapide au plus réaliste.
+Quatre niveaux, du plus rapide au plus réaliste.
 
 ### 1. Tests unitaires : `tests/unit/`
 
@@ -65,6 +66,16 @@ TEST_USER_PASSWORD=...
 ```
 
 Les opérations se font dans une boutique dédiée, « Boutique de test automatique », créée au premier lancement. L'application affiche la boutique la plus ancienne du compte, donc votre boutique réelle n'est pas touchée. Le registre étant en ajout seul, les clients de test sont soldés puis archivés à la fin. Sans identifiants, ces tests sont ignorés.
+
+### 4. Tests navigateur : `tests/e2e/`, lancés par `npm run test:e2e`
+
+Lancez d'abord `npm run build`, puis `npx playwright install chromium` la première fois. Playwright démarre le build de production et joue le scénario dans Chromium, avec un profil de téléphone Android :
+- le service worker s'installe ;
+- réseau coupé, n'importe quelle page affiche le mode hors ligne ;
+- recherche dans les soldes du dernier chargement ;
+- une saisie hors ligne est conservée après rechargement ;
+- un remboursement supérieur au solde connu est bloqué ;
+- le cache ne contient aucune donnée personnelle.
 
 ### Vérification manuelle avant une mise en production
 
@@ -126,6 +137,33 @@ Les écritures financières passent **uniquement** par les fonctions PostgreSQL 
 - Une annulation qui rendrait le solde négatif est refusée : il faut d'abord annuler le remboursement concerné.
 - Un client ne peut être archivé que par le propriétaire, et seulement si son solde est nul.
 
+## Mode hors ligne
+
+Le mode hors ligne repose sur trois couches.
+
+| Situation | Comportement |
+|---|---|
+| Coupure brève, application ouverte | Option `experimental.useOffline` de Next.js : la navigation ou l'enregistrement en cours attend, puis repart au retour du réseau. Le bouton affiche « En attente du réseau… » et un bandeau signale la coupure. La clé d'idempotence empêche tout doublon. |
+| Application ouverte sans réseau | Le service worker ([public/sw.js](public/sw.js)) sert la page `/offline`, qui affiche les clients et les soldes du **dernier chargement** (Accueil, Clients ou Ajouter une dette), avec leur date. |
+| Saisie sans réseau | Sur `/offline`, les dettes et les remboursements vont dans une **file d'attente IndexedDB** : elle survit à la fermeture de l'application et est envoyée dans l'ordre de saisie au retour d'Internet. La date réelle de l'opération est conservée. |
+
+À la synchronisation, PostgreSQL revérifie tout. Une opération devenue impossible (remboursement supérieur au solde parce qu'un collègue a déjà encaissé, client archivé, vendeur retiré…) est **marquée « Refusée » avec son motif**. Elle reste visible jusqu'à ce que l'utilisateur la supprime : elle ne disparaît jamais en silence.
+
+**Confidentialité :** le service worker ne met en cache que les fichiers de l'application, jamais les pages connectées. Les données locales (soldes et file d'attente) sont effacées à la déconnexion. Un avertissement s'affiche s'il reste des opérations non envoyées.
+
+**Ce qui est testé :**
+- le moteur de synchronisation (`tests/unit/offline-sync.test.ts`) ;
+- le stockage IndexedDB (`tests/unit/offline-store.test.ts`) ;
+- la synchronisation de bout en bout avec les vraies fonctions SQL : ordre, renvoi sans doublon après un plantage, conflits (`tests/db/offline-sync.test.ts`) ;
+- le comportement dans un vrai navigateur (`tests/e2e/offline.spec.ts`).
+
+**Pas encore testé :** la synchronisation depuis un téléphone réel vers le projet Supabase, à vérifier après le déploiement.
+
+**Limites :**
+- seules les dettes et les remboursements peuvent être saisis hors ligne (pas la création de client) ;
+- les soldes affichés hors ligne sont ceux du dernier chargement, plus les opérations en attente ;
+- la page `/offline` est mise à jour à chaque ouverture en ligne de l'application.
+
 ## Organisation du code
 
 ```
@@ -174,4 +212,5 @@ Les textes sont regroupés dans [src/i18n/messages/fr.ts](src/i18n/messages/fr.t
 - [ ] Étape 10 : déploiement Vercel (en attente)
 - [x] Étape 11 : rapports par période, export CSV (opérations, clients), relevé client PDF partageable
 - [x] Étape 12 : équipe (invitations de vendeurs par code ou lien WhatsApp, retrait, départ, choix de la boutique active)
-- [ ] Ensuite : mode hors ligne (PWA), wolof
+- [x] Étape 13 : mode hors ligne (service worker, consultation des soldes, file d'attente durable, synchronisation)
+- [ ] Ensuite : déploiement Vercel, wolof, création de client hors ligne

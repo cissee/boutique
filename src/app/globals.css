@@ -18,6 +18,8 @@
   --repayment: #067647;
   --repayment-soft: #dcfae6;
   --focus: #f5b83d;
+  --warning: #7a4b00;
+  --warning-soft: #fff4d6;
 }
 
 @theme inline {
@@ -34,6 +36,8 @@
   --color-repayment: var(--repayment);
   --color-repayment-soft: var(--repayment-soft);
   --color-focus: var(--focus);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
