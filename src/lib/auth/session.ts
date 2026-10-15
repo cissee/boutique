@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Enums, Tables } from "@/lib/supabase/database.types";
 
@@ -18,6 +19,9 @@ export type ActiveShop = {
 };
 
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
+  // La session dépend de la requête (et supabase-js lit l'heure pour vérifier le jeton) :
+  // rien de ceci ne doit être prérendu.
+  await connection();
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;

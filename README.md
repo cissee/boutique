@@ -77,6 +77,10 @@ Lancez d'abord `npm run build`, puis `npx playwright install chromium` la premi�
 - un remboursement supérieur au solde connu est bloqué ;
 - le cache ne contient aucune donnée personnelle.
 
+Si `.env.test.local` contient un compte de test, un second scénario se connecte et ouvre chaque page de l'application, en lecture seule. Pour viser un serveur déjà lancé, par exemple `npm run dev`, définissez `PLAYWRIGHT_BASE_URL=http://localhost:3000`.
+
+> Sous Windows, lancez les scripts `npm` depuis PowerShell ou l'invite de commandes. Dans Git Bash, la variable `ComSpec` est parfois absente et `npm test` s'arrête alors sans rien afficher.
+
 ### Vérification manuelle avant une mise en production
 
 1. Inscription → email de confirmation → accueil guidé (profil, boutique, premier client).

@@ -7,6 +7,9 @@ const t = getMessages();
 
 export const metadata: Metadata = { title: t.join.title };
 
+// Données lues en base à chaque requête : voir le commentaire de (app)/layout.tsx.
+export const instant = false;
+
 /** Lien d'invitation : /join?code=XXXXXXXX (connexion exigée par le proxy). */
 export default async function JoinPage({ searchParams }: PageProps<"/join">) {
   await requireUser();

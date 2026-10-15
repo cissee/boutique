@@ -11,6 +11,9 @@ const t = getMessages();
 
 export const metadata: Metadata = { title: t.onboarding.shopTitle };
 
+// Données lues en base à chaque requête : voir le commentaire de (app)/layout.tsx.
+export const instant = false;
+
 export default async function OnboardingShopPage() {
   if (await getActiveShop()) redirect("/onboarding/customer");
   return (

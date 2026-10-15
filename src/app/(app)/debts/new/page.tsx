@@ -12,6 +12,9 @@ const t = getMessages();
 
 export const metadata: Metadata = { title: t.ledger.debtTitle };
 
+// Données lues en base à chaque requête : voir le commentaire de (app)/layout.tsx.
+export const instant = false;
+
 export default async function NewDebtPage({ searchParams }: PageProps<"/debts/new">) {
   const { shop, user } = await requireShop();
   const [{ customer }, customers] = await Promise.all([searchParams, listCustomers(shop.id)]);

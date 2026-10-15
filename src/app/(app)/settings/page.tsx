@@ -15,6 +15,9 @@ const t = getMessages();
 
 export const metadata: Metadata = { title: t.nav.settings };
 
+// Données lues en base à chaque requête : voir le commentaire de (app)/layout.tsx.
+export const instant = false;
+
 export default async function SettingsPage() {
   const active = await requireShop();
   const { shop, role, user } = active;

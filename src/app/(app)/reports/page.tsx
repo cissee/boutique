@@ -14,6 +14,9 @@ const t = getMessages();
 
 export const metadata: Metadata = { title: t.nav.reports };
 
+// Données lues en base à chaque requête : voir le commentaire de (app)/layout.tsx.
+export const instant = false;
+
 const PRESET_LABELS: Record<PeriodKey, string> = {
   today: t.reports.today,
   last7: t.reports.last7,

@@ -3,6 +3,13 @@ import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { SyncManager } from "@/components/pwa/sync-manager";
 import { SideNav } from "@/components/layout/side-nav";
 
+/**
+ * Pages connectées : soldes et opérations toujours lus en base à la requête (jamais
+ * prérendus ni mis en cache). Le chargement s'affiche via loading.tsx ; on renonce donc
+ * volontairement à la validation « navigation instantanée » de Next.js.
+ */
+export const instant = false;
+
 /** Coquille de l'application connectée (le contrôle de session sera ajouté à l'étape 5). */
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (

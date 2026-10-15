@@ -16,6 +16,9 @@ const t = getMessages();
 
 export const metadata: Metadata = { title: t.nav.dashboard };
 
+// Données lues en base à chaque requête : voir le commentaire de (app)/layout.tsx.
+export const instant = false;
+
 const RECENT_LIMIT = 8;
 
 export default async function DashboardPage() {

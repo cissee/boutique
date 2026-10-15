@@ -13,6 +13,9 @@ import { CUSTOMER_HISTORY_LIMIT, getCustomer, getCustomerTransactions } from "@/
 
 const t = getMessages();
 
+// Données lues en base à chaque requête : voir le commentaire de (app)/layout.tsx.
+export const instant = false;
+
 export async function generateMetadata({ params }: PageProps<"/customers/[id]">): Promise<Metadata> {
   const { id } = await params;
   const { shop } = await requireShop();

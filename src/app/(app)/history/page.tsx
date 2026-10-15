@@ -15,6 +15,9 @@ const t = getMessages();
 
 export const metadata: Metadata = { title: t.nav.history };
 
+// Données lues en base à chaque requête : voir le commentaire de (app)/layout.tsx.
+export const instant = false;
+
 const PAGE_SIZE = 30;
 const TYPES = ["DEBT", "REPAYMENT", "REVERSAL"] as const satisfies readonly Enums<"transaction_type">[];
 

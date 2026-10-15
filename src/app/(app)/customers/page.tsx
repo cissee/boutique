@@ -13,6 +13,9 @@ const t = getMessages();
 
 export const metadata: Metadata = { title: t.nav.customers };
 
+// Données lues en base à chaque requête : voir le commentaire de (app)/layout.tsx.
+export const instant = false;
+
 export default async function CustomersPage() {
   const { shop, user } = await requireShop();
   const customers = await listCustomers(shop.id);

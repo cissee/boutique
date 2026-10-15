@@ -9,6 +9,9 @@ const t = getMessages();
 
 export const metadata: Metadata = { title: t.onboarding.customerTitle };
 
+// Données lues en base à chaque requête : voir le commentaire de (app)/layout.tsx.
+export const instant = false;
+
 export default async function OnboardingCustomerPage() {
   await requireShop();
   return (
