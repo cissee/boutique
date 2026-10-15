@@ -31,7 +31,8 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
 }
 
 export async function signUp(_prev: FormState, formData: FormData): Promise<FormState> {
-  const raw = formFields(formData, ["fullName", "email", "password", "confirmPassword"]);
+  const raw = formFields(formData, ["fullName", "email", "password", "confirmPassword", "next"]);
+  const next = safeNextPath(raw.next, "/onboarding/profile");
   const parsed = signupSchema.safeParse(raw);
   const values = { fullName: raw.fullName, email: raw.email };
   if (!parsed.success) return invalidForm(parsed.error, values);
@@ -42,13 +43,13 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
     password: parsed.data.password,
     options: {
       data: { full_name: parsed.data.fullName },
-      emailRedirectTo: `${siteUrl()}/auth/callback?next=/onboarding/profile`,
+      emailRedirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
   if (error) return { error: authErrorMessage(error), values };
 
   // Confirmation d'email désactivée : la session existe déjà.
-  if (data.session) redirect("/onboarding/profile");
+  if (data.session) redirect(next);
 
   // Même message que l'adresse soit nouvelle ou déjà utilisée (pas d'énumération des comptes).
   return { success: t.auth.checkEmail };

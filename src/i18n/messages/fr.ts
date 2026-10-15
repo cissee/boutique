@@ -229,6 +229,42 @@ export const fr = {
       OTHER: "Autre",
     },
   },
+  team: {
+    title: "Équipe",
+    you: "vous",
+    joined: "depuis le {date}",
+    invite: "Inviter un vendeur",
+    inviteIntro:
+      "Un vendeur peut enregistrer des dettes et des remboursements, et ajouter des clients. Il ne peut pas annuler une opération, modifier la boutique ni exporter les données.",
+    newCode: "Code d'invitation",
+    codeHelp: "Envoyez ce code ou ce lien au vendeur. Il est valable 7 jours et ne sert qu'une fois.",
+    shareWhatsapp: "Envoyer par WhatsApp",
+    copyLink: "Copier le lien",
+    copied: "Lien copié",
+    whatsappMessage:
+      "Bonjour ! Rejoignez la boutique {shop} sur BoutikDëkk. Ouvrez ce lien : {link} (code : {code})",
+    pending: "Invitations en attente",
+    expires: "expire le {date}",
+    revoke: "Révoquer",
+    remove: "Retirer",
+    removeConfirm: "Retirer {name} de la boutique ? Il n'aura plus accès aux données.",
+    leave: "Quitter cette boutique",
+    leaveConfirm: "Quitter la boutique ? Vous n'aurez plus accès à ses données.",
+    unnamed: "Sans nom",
+  },
+  join: {
+    title: "Rejoindre une boutique",
+    intro: "Entrez le code d'invitation reçu du propriétaire de la boutique.",
+    code: "Code d'invitation",
+    codeHint: "8 caractères, ex. K7MP-2XQ9",
+    submit: "Rejoindre la boutique",
+    haveCode: "Vous êtes vendeur ? J'ai un code d'invitation",
+  },
+  shops: {
+    switchTitle: "Mes boutiques",
+    current: "Boutique actuelle",
+    switch: "Ouvrir",
+  },
   settings: {
     profileSection: "Mon profil",
     shopSection: "Ma boutique",
@@ -268,6 +304,10 @@ export const fr = {
     cannotReverseReversal: "Une annulation ne peut pas être annulée.",
     reversalNegative: "Annulez d'abord le remboursement lié à cette dette.",
     duplicate: "Cette opération a déjà été enregistrée.",
+    tooManyInvitations: "Trop d'invitations en attente. Révoquez-en une avant d'en créer une nouvelle.",
+    invalidInvitation: "Code invalide, expiré ou déjà utilisé. Demandez un nouveau code au propriétaire.",
+    alreadyMember: "Vous faites déjà partie de cette boutique.",
+    lastOwner: "La boutique doit garder au moins un propriétaire.",
   },
 } as const;
 

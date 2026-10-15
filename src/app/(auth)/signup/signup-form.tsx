@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { FormAlert, SubmitButton, TextField } from "@/components/ui/form";
 import { getMessages } from "@/i18n";
 import { initialFormState } from "@/lib/validation/form-state";
@@ -10,6 +11,7 @@ const t = getMessages();
 
 export function SignupForm() {
   const [state, action] = useActionState(signUp, initialFormState);
+  const next = useSearchParams().get("next") ?? "";
 
   if (state.success) {
     return (
@@ -22,6 +24,7 @@ export function SignupForm() {
 
   return (
     <form action={action} className="flex flex-col gap-5" noValidate>
+      <input type="hidden" name="next" value={next} />
       <FormAlert error={state.error} />
       <TextField
         label={t.fields.fullName}

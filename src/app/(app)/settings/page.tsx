@@ -4,25 +4,53 @@ import type { ReactNode } from "react";
 import { ProfileForm } from "@/components/forms/profile-form";
 import { ShopForm } from "@/components/forms/shop-form";
 import { PageHeader } from "@/components/layout/page-header";
+import { TeamSection } from "@/components/team/team-section";
 import { SubmitButton } from "@/components/ui/form";
 import { getMessages } from "@/i18n";
-import { getProfile, requireShop } from "@/lib/auth/session";
+import { getProfile, listMyShops, requireShop } from "@/lib/auth/session";
 import { updateShop } from "@/server/actions/account";
 import { signOut } from "@/server/actions/auth";
+import { switchShop } from "@/server/actions/team";
 
 const t = getMessages();
 
 export const metadata: Metadata = { title: t.nav.settings };
 
 export default async function SettingsPage() {
-  const { shop, role, user } = await requireShop();
-  const profile = await getProfile();
+  const active = await requireShop();
+  const { shop, role, user } = active;
+  const [profile, myShops] = await Promise.all([getProfile(), listMyShops()]);
   const isOwner = role === "owner";
 
   return (
     <>
       <PageHeader title={t.nav.settings} />
       <div className="flex flex-col gap-6">
+        {myShops.length > 1 && (
+          <Section title={t.shops.switchTitle}>
+            <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+              {myShops.map((s) => (
+                <li key={s.shop.id} className="flex items-center gap-3 px-4 py-3">
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-base font-semibold">{s.shop.name}</span>
+                    <span className="text-sm text-muted">{t.settings.role[s.role]}</span>
+                  </span>
+                  {s.shop.id === shop.id ? (
+                    <span className="text-sm font-semibold text-brand">{t.shops.current}</span>
+                  ) : (
+                    <form action={switchShop}>
+                      <input type="hidden" name="shopId" value={s.shop.id} />
+                      <button type="submit" className="min-h-10 rounded-lg border-2 border-brand px-3 text-sm font-semibold text-brand">
+                        {t.shops.switch}
+                      </button>
+                    </form>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+
         <Section title={t.settings.profileSection}>
           <ProfileForm
             submitLabel={t.common.save}
@@ -32,7 +60,11 @@ export default async function SettingsPage() {
 
         <Section title={t.settings.shopSection} badge={t.settings.role[role]}>
           {!isOwner && <p className="text-sm text-muted">{t.settings.shopOwnerOnly}</p>}
-          <ShopForm action={updateShop} defaults={shop} submitLabel={t.common.save} readOnly={!isOwner} />
+          <ShopForm key={shop.id} action={updateShop} defaults={shop} submitLabel={t.common.save} readOnly={!isOwner} />
+        </Section>
+
+        <Section title={t.team.title}>
+          <TeamSection active={active} user={user} />
         </Section>
 
         <Section title={t.settings.accountSection}>

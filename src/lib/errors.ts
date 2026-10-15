@@ -19,6 +19,10 @@ const dbErrors: Record<string, string> = {
   reversal_would_make_negative_balance: t.errors.reversalNegative,
   negative_balance: t.errors.amountExceedsBalance,
   idempotency_conflict: t.errors.duplicate,
+  too_many_invitations: t.errors.tooManyInvitations,
+  invalid_invitation: t.errors.invalidInvitation,
+  already_member: t.errors.alreadyMember,
+  last_owner: t.errors.lastOwner,
 };
 
 /** Codes d'erreur Supabase Auth -> texte affiché. */

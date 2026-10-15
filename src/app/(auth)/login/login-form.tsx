@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormAlert, SubmitButton, TextField } from "@/components/ui/form";
 import { getMessages } from "@/i18n";
@@ -38,5 +39,18 @@ export function LoginForm() {
       />
       <SubmitButton>{t.auth.loginSubmit}</SubmitButton>
     </form>
+  );
+}
+
+/** Lien vers l'inscription qui conserve la destination (ex. lien d'invitation). */
+export function SignupLink() {
+  const next = useSearchParams().get("next");
+  return (
+    <Link
+      href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"}
+      className="font-semibold text-brand underline-offset-4 hover:underline"
+    >
+      {t.auth.signupLink}
+    </Link>
   );
 }

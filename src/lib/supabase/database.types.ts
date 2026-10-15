@@ -139,6 +139,23 @@ export type Database = {
           },
         ];
       };
+      shop_invitations: {
+        Row: {
+          id: string;
+          shop_id: string;
+          code: string;
+          role: Database["public"]["Enums"]["shop_role"];
+          created_by: string;
+          created_at: string;
+          expires_at: string;
+          accepted_by: string | null;
+          accepted_at: string | null;
+          revoked_at: string | null;
+        };
+        Insert: never;
+        Update: { revoked_at?: string | null };
+        Relationships: [];
+      };
       audit_log: {
         Row: {
           id: number;
@@ -220,6 +237,14 @@ export type Database = {
           new_customers: number;
           outstanding_end: number;
         }[];
+      };
+      create_shop_invitation: {
+        Args: { p_shop_id: string };
+        Returns: Database["public"]["Tables"]["shop_invitations"]["Row"];
+      };
+      accept_shop_invitation: {
+        Args: { p_code: string };
+        Returns: string;
       };
       reverse_transaction: {
         Args: { p_transaction_id: string; p_reason: string; p_client_request_id: string };

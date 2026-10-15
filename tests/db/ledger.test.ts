@@ -392,6 +392,105 @@ describe("rapport de période (shop_report)", () => {
   });
 });
 
+describe("invitations de vendeurs", () => {
+  async function invite(ownerId: string, shopId: string) {
+    const [inv] = await db.as<{ id: string; code: string }>(
+      ownerId,
+      "select id, code from public.create_shop_invitation($1)",
+      [shopId],
+    );
+    return inv;
+  }
+  const accept = (userId: string, code: string) =>
+    db.as<{ accept_shop_invitation: string }>(userId, "select public.accept_shop_invitation($1)", [code]);
+
+  it("le propriétaire invite, le vendeur rejoint avec le code (casse et tirets ignorés)", async () => {
+    const { owner, shopId } = await setupShop();
+    const inv = await invite(owner, shopId);
+    expect(inv.code).toMatch(/^[A-HJ-NP-Z2-9]{8}$/);
+
+    const newcomer = await db.createUser("Nouveau vendeur");
+    const typed = `${inv.code.slice(0, 4).toLowerCase()}-${inv.code.slice(4)}`;
+    const [res] = await accept(newcomer, typed);
+    expect(res.accept_shop_invitation).toBe(shopId);
+
+    const members = await db.as(newcomer, "select role from public.shop_members where shop_id = $1 and user_id = $2", [
+      shopId,
+      newcomer,
+    ]);
+    expect(members).toEqual([{ role: "seller" }]);
+    // Le nouveau vendeur voit maintenant les clients de la boutique, mais pas les invitations.
+    expect(await db.as(newcomer, "select * from public.shop_invitations")).toHaveLength(0);
+  });
+
+  it("un code ne sert qu'une fois", async () => {
+    const { owner, shopId } = await setupShop();
+    const inv = await invite(owner, shopId);
+    const first = await db.createUser();
+    const second = await db.createUser();
+    await accept(first, inv.code);
+    await expect(accept(second, inv.code)).rejects.toThrow("invalid_invitation");
+    // Rejouer son propre code est sans effet.
+    await expect(accept(first, inv.code)).resolves.toHaveLength(1);
+  });
+
+  it("code révoqué, expiré ou inconnu : refusé", async () => {
+    const { owner, shopId } = await setupShop();
+    const revoked = await invite(owner, shopId);
+    await db.as(owner, "update public.shop_invitations set revoked_at = now() where id = $1", [revoked.id]);
+    const expired = await invite(owner, shopId);
+    await db.admin("update public.shop_invitations set expires_at = now() - interval '1 minute' where id = $1", [
+      expired.id,
+    ]);
+    const user = await db.createUser();
+    await expect(accept(user, revoked.code)).rejects.toThrow("invalid_invitation");
+    await expect(accept(user, expired.code)).rejects.toThrow("invalid_invitation");
+    await expect(accept(user, "ZZZZZZZZ")).rejects.toThrow("invalid_invitation");
+  });
+
+  it("un vendeur ne peut ni inviter, ni voir, ni révoquer les invitations", async () => {
+    const { owner, seller, shopId } = await setupShop();
+    await expect(invite(seller, shopId)).rejects.toThrow("forbidden");
+    const inv = await invite(owner, shopId);
+    expect(await db.as(seller, "select * from public.shop_invitations where id = $1", [inv.id])).toHaveLength(0);
+    const updated = await db.as(seller, "update public.shop_invitations set revoked_at = now() where id = $1 returning id", [
+      inv.id,
+    ]);
+    expect(updated).toHaveLength(0);
+  });
+
+  it("un membre existant ne peut pas utiliser un code de sa propre boutique", async () => {
+    const { owner, seller, shopId } = await setupShop();
+    const inv = await invite(owner, shopId);
+    await expect(accept(seller, inv.code)).rejects.toThrow("already_member");
+  });
+
+  it("le propriétaire retire un vendeur ; un vendeur ne retire personne d'autre", async () => {
+    const { owner, seller, shopId } = await setupShop();
+    const other = await db.createUser();
+    await db.addMember(shopId, other, "seller");
+
+    const byseller = await db.as(seller, "delete from public.shop_members where shop_id = $1 and user_id = $2 returning id", [
+      shopId,
+      other,
+    ]);
+    expect(byseller).toHaveLength(0);
+
+    const byOwner = await db.as(owner, "delete from public.shop_members where shop_id = $1 and user_id = $2 returning id", [
+      shopId,
+      other,
+    ]);
+    expect(byOwner).toHaveLength(1);
+    expect(await db.as(other, "select * from public.customers where shop_id = $1", [shopId])).toHaveLength(0);
+  });
+
+  it("10 invitations actives au plus", async () => {
+    const { owner, shopId } = await setupShop();
+    for (let i = 0; i < 10; i++) await invite(owner, shopId);
+    await expect(invite(owner, shopId)).rejects.toThrow("too_many_invitations");
+  });
+});
+
 describe("isolation entre boutiques", () => {
   it("un utilisateur ne voit ni les clients, ni les transactions, ni les soldes d'une autre boutique", async () => {
     const a = await setupShop();

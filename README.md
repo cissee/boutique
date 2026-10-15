@@ -74,8 +74,9 @@ Les opérations se font dans une boutique dédiée, « Boutique de test automati
 4. Tenter un remboursement supérieur au solde : il doit être refusé.
 5. Annuler une opération (propriétaire) : elle apparaît barrée, avec une ligne « Annulation ».
 6. Historique : filtres par type et par période, pagination.
-7. Avec un compte vendeur : pas de bouton « Annuler » et boutique en lecture seule dans les paramètres.
-8. Se déconnecter : les pages de l'application renvoient vers la connexion.
+7. Paramètres → Équipe → « Inviter un vendeur ». Ouvrir le lien dans un autre navigateur, créer un compte vendeur, puis rejoindre la boutique.
+8. Avec ce compte vendeur : pas de bouton « Annuler », pas d'export, et boutique en lecture seule dans les paramètres. Le propriétaire peut ensuite le retirer.
+9. Se déconnecter : les pages de l'application renvoient vers la connexion.
 
 ## Mise en place de Supabase
 
@@ -107,6 +108,7 @@ Après une nouvelle migration, régénérer les types TypeScript : `npx supabase
 | `profiles` | Profil de l'utilisateur, créé automatiquement à l'inscription |
 | `shops` | Boutiques (devise `XOF`) |
 | `shop_members` | Rôle de l'utilisateur dans la boutique : `owner` (propriétaire) ou `seller` (vendeur) |
+| `shop_invitations` | Codes d'invitation des vendeurs : usage unique, valables 7 jours, révocables |
 | `customers` | Clients, archivés et jamais supprimés |
 | `ledger_transactions` | Registre en **ajout seul** : `DEBT`, `REPAYMENT`, `REVERSAL` |
 | `audit_log` | Journal des opérations sensibles, lisible par le propriétaire |
@@ -171,4 +173,5 @@ Les textes sont regroupés dans [src/i18n/messages/fr.ts](src/i18n/messages/fr.t
 - [x] Étape 9 : historique filtrable, tests de concurrence, documentation
 - [ ] Étape 10 : déploiement Vercel (en attente)
 - [x] Étape 11 : rapports par période, export CSV (opérations, clients), relevé client PDF partageable
-- [ ] Ensuite : gestion des vendeurs (invitations), mode hors ligne (PWA), wolof
+- [x] Étape 12 : équipe (invitations de vendeurs par code ou lien WhatsApp, retrait, départ, choix de la boutique active)
+- [ ] Ensuite : mode hors ligne (PWA), wolof

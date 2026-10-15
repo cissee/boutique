@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Enums, Tables } from "@/lib/supabase/database.types";
@@ -37,11 +38,11 @@ export const getProfile = cache(async () => {
   return data;
 });
 
-/**
- * Boutique active de l'utilisateur, déduite de ses appartenances en base (RLS).
- * Pour l'instant : la plus ancienne. Un sélecteur de boutique viendra plus tard.
- */
-export const getActiveShop = cache(async (): Promise<ActiveShop | null> => {
+/** Préférence de boutique (simple choix d'affichage, toujours revérifié contre les appartenances). */
+export const ACTIVE_SHOP_COOKIE = "active_shop";
+
+/** Boutiques (non archivées) dont l'utilisateur est membre, de la plus ancienne à la plus récente. */
+export const listMyShops = cache(async (): Promise<ActiveShop[]> => {
   const user = await requireUser();
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -49,14 +50,22 @@ export const getActiveShop = cache(async (): Promise<ActiveShop | null> => {
     .select("role, shop:shops!inner(id, name, phone, address, currency, archived_at)")
     .eq("user_id", user.id)
     .is("shop.archived_at", null)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
   if (error) throw error;
-  if (!data) return null;
-  const { archived_at: _archived, ...shop } = data.shop;
-  return { role: data.role, shop };
+  return data.map(({ role, shop: { archived_at: _archived, ...shop } }) => ({ role, shop }));
+});
+
+/**
+ * Boutique active : celle choisie par l'utilisateur (cookie) si elle fait bien partie
+ * de ses boutiques, sinon la plus ancienne. Le cookie ne donne aucun droit : la RLS
+ * et cette vérification décident.
+ */
+export const getActiveShop = cache(async (): Promise<ActiveShop | null> => {
+  const shops = await listMyShops();
+  if (!shops.length) return null;
+  const preferred = (await cookies()).get(ACTIVE_SHOP_COOKIE)?.value;
+  return shops.find((s) => s.shop.id === preferred) ?? shops[0];
 });
 
 /** Pour toutes les pages de l'application : exige un utilisateur ET une boutique. */
