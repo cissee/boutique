@@ -47,6 +47,8 @@ export const fr = {
     passwordHint: "8 caractères minimum",
     newPassword: "Nouveau mot de passe",
     confirmPassword: "Confirmer le mot de passe",
+    showPassword: "Afficher le mot de passe",
+    hidePassword: "Masquer le mot de passe",
     shopName: "Nom de la boutique",
     shopNameHint: "Ex. Boutique Chez Modou",
     address: "Adresse ou quartier",

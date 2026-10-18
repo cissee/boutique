@@ -1,6 +1,7 @@
 "use client";
 
-import { useId, type InputHTMLAttributes, type ReactNode } from "react";
+import { useId, useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { EyeIcon, EyeOffIcon } from "@/components/icons";
 import { useFormStatus } from "react-dom";
 import { useOffline } from "next/offline";
 import { getMessages } from "@/i18n";
@@ -13,10 +14,12 @@ type TextFieldProps = {
   hint?: string;
   optional?: boolean;
   errors?: string[];
+  /** Bouton affiché à droite, dans le champ (ex. afficher le mot de passe). */
+  trailing?: ReactNode;
 } & Omit<InputHTMLAttributes<HTMLInputElement>, "name">;
 
 /** Champ texte grand format, lisible et facile à toucher. */
-export function TextField({ label, name, hint, optional, errors, ...input }: TextFieldProps) {
+export function TextField({ label, name, hint, optional, errors, trailing, ...input }: TextFieldProps) {
   const id = useId();
   const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
@@ -28,16 +31,19 @@ export function TextField({ label, name, hint, optional, errors, ...input }: Tex
         {label}
         {optional && <span className="font-normal text-muted"> ({t.common.optional})</span>}
       </label>
-      <input
-        id={id}
-        name={name}
-        aria-invalid={hasError || undefined}
-        aria-describedby={[hint && hintId, hasError && errorId].filter(Boolean).join(" ") || undefined}
-        className={`min-h-12 rounded-xl border-2 bg-surface px-4 text-lg outline-none focus:border-brand ${
-          hasError ? "border-debt" : "border-border"
-        }`}
-        {...input}
-      />
+      <div className="relative">
+        <input
+          id={id}
+          name={name}
+          aria-invalid={hasError || undefined}
+          aria-describedby={[hint && hintId, hasError && errorId].filter(Boolean).join(" ") || undefined}
+          className={`min-h-12 w-full rounded-xl border-2 bg-surface px-4 text-lg outline-none focus:border-brand ${
+            trailing ? "pr-14" : ""
+          } ${hasError ? "border-debt" : "border-border"}`}
+          {...input}
+        />
+        {trailing && <div className="absolute inset-y-0 right-1 flex items-center">{trailing}</div>}
+      </div>
       {hint && !hasError && (
         <p id={hintId} className="text-sm text-muted">
           {hint}
@@ -49,6 +55,33 @@ export function TextField({ label, name, hint, optional, errors, ...input }: Tex
         </p>
       )}
     </div>
+  );
+}
+
+/** Mot de passe avec bouton « œil » pour afficher ou masquer la saisie. */
+export function PasswordField(props: Omit<TextFieldProps, "type" | "trailing">) {
+  const [visible, setVisible] = useState(false);
+  const label = visible ? t.fields.hidePassword : t.fields.showPassword;
+  return (
+    <TextField
+      {...props}
+      type={visible ? "text" : "password"}
+      autoCapitalize="none"
+      autoCorrect="off"
+      spellCheck={false}
+      trailing={
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          aria-label={label}
+          aria-pressed={visible}
+          title={label}
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:text-foreground"
+        >
+          {visible ? <EyeOffIcon /> : <EyeIcon />}
+        </button>
+      }
+    />
   );
 }
 

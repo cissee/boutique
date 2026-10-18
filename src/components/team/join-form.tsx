@@ -23,7 +23,7 @@ export function JoinForm({ initialCode }: { initialCode: string }) {
         required
         defaultValue={state.values?.code}
         errors={state.fieldErrors?.code}
-        className="tabular min-h-14 rounded-xl border-2 border-border bg-surface px-4 text-center text-2xl font-bold tracking-widest uppercase outline-none focus:border-brand"
+        className="tabular min-h-14 w-full rounded-xl border-2 border-border bg-surface px-4 text-center text-2xl font-bold tracking-widest uppercase outline-none focus:border-brand"
       />
       <SubmitButton>{t.join.submit}</SubmitButton>
     </form>

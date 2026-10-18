@@ -23,7 +23,7 @@ const PAGES: { path: string; heading: RegExp }[] = [
 test("connexion puis affichage de toutes les pages", async ({ page }) => {
   await page.goto("/login?next=/dashboard");
   await page.getByLabel("Adresse email").fill(TEST_USER_EMAIL!);
-  await page.getByLabel("Mot de passe").fill(TEST_USER_PASSWORD!);
+  await page.getByLabel("Mot de passe", { exact: true }).fill(TEST_USER_PASSWORD!);
   await page.getByRole("button", { name: "Se connecter" }).click();
 
   await page.waitForURL((url) => url.pathname === "/dashboard");

@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
-import { FormAlert, SubmitButton, TextField } from "@/components/ui/form";
+import { FormAlert, PasswordField, SubmitButton, TextField } from "@/components/ui/form";
 import { getMessages } from "@/i18n";
 import { initialFormState } from "@/lib/validation/form-state";
 import { signUp } from "@/server/actions/auth";
@@ -44,19 +44,17 @@ export function SignupForm() {
         defaultValue={state.values?.email}
         errors={state.fieldErrors?.email}
       />
-      <TextField
+      <PasswordField
         label={t.fields.password}
         name="password"
-        type="password"
         autoComplete="new-password"
         hint={t.fields.passwordHint}
         required
         errors={state.fieldErrors?.password}
       />
-      <TextField
+      <PasswordField
         label={t.fields.confirmPassword}
         name="confirmPassword"
-        type="password"
         autoComplete="new-password"
         required
         errors={state.fieldErrors?.confirmPassword}

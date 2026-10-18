@@ -39,7 +39,7 @@ const clearQueue = (page: Page) =>
 test("sans réseau, les écrans habituels basculent sur le mode hors ligne", async ({ page, context }) => {
   await page.goto("/login?next=/dashboard");
   await page.getByLabel("Adresse email").fill(TEST_USER_EMAIL!);
-  await page.getByLabel("Mot de passe").fill(TEST_USER_PASSWORD!);
+  await page.getByLabel("Mot de passe", { exact: true }).fill(TEST_USER_PASSWORD!);
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL((u) => u.pathname === "/dashboard");
   await expect(page.getByText("Total des dettes")).toBeVisible();
