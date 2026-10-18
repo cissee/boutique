@@ -1,0 +1,22 @@
+<!--
+  Supabase → Authentication → Emails → Templates → « Reset password »
+  Objet : Choisissez un nouveau mot de passe BoutikDëkk
+-->
+<div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; color: #111827;">
+  <h1 style="color: #0f6b4f; font-size: 22px; margin-bottom: 8px;">BoutikDëkk</h1>
+  <p style="font-size: 16px; line-height: 1.5;">Bonjour,</p>
+  <p style="font-size: 16px; line-height: 1.5;">
+    Vous avez demandé à changer votre mot de passe. Touchez le bouton ci-dessous pour en choisir un nouveau.
+    Ce lien n'est valable qu'une seule fois et pendant une durée limitée.
+  </p>
+  <p style="margin: 28px 0;">
+    <a
+      href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery"
+      style="background: #0f6b4f; color: #ffffff; padding: 14px 24px; border-radius: 10px; text-decoration: none; font-size: 16px; font-weight: bold; display: inline-block;"
+      >Choisir un nouveau mot de passe</a
+    >
+  </p>
+  <p style="font-size: 14px; line-height: 1.5; color: #4b5563;">
+    Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre mot de passe actuel reste valable.
+  </p>
+</div>

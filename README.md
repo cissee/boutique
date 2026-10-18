@@ -108,9 +108,7 @@ Si `.env.test.local` contient un compte de test, un second scénario se connecte
    - *Redirect URLs* : `http://localhost:3000/auth/callback` et `https://*.vercel.app/auth/callback`.
 5. Dans *Authentication → Providers → Email*, laisser la **confirmation de l'email** activée.
 6. **Envoi des emails :** le serveur d'emails intégré de Supabase n'envoie qu'aux membres de l'équipe du projet, et seulement quelques emails par heure. Avant d'ouvrir l'inscription au public, configurez un SMTP dans *Authentication → Emails → SMTP Settings* (Resend, Brevo…).
-7. *(Recommandé)* Pour que les liens fonctionnent même ouverts sur un autre téléphone, remplacez dans les modèles d'email `{{ .ConfirmationURL }}` par :
-   - confirmation d'inscription : `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/onboarding/profile`
-   - réinitialisation du mot de passe : `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password`
+7. **Modèles d'email en français** : copiez le contenu de [supabase/templates/confirmation.html](supabase/templates/confirmation.html) dans *Authentication → Emails → Templates → Confirm signup*, et celui de [supabase/templates/recovery.html](supabase/templates/recovery.html) dans *Reset password*. L'objet de chaque email est indiqué en tête de fichier. Ces liens fonctionnent depuis n'importe quel navigateur, même ouverts sur un autre appareil, et conservent la destination (par exemple une invitation de vendeur).
 
 Après une nouvelle migration, régénérer les types TypeScript : `npx supabase login` puis `npm run db:types`.
 

@@ -1,0 +1,24 @@
+<!--
+  Supabase → Authentication → Emails → Templates → « Confirm signup »
+  Objet : Confirmez votre compte BoutikDëkk
+  {{ .RedirectTo }} = adresse de retour choisie par l'application (déjà munie de ?next=...).
+  Le lien utilise token_hash : il fonctionne dans n'importe quel navigateur ou appareil.
+-->
+<div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; color: #111827;">
+  <h1 style="color: #0f6b4f; font-size: 22px; margin-bottom: 8px;">BoutikDëkk</h1>
+  <p style="font-size: 16px; line-height: 1.5;">Bonjour,</p>
+  <p style="font-size: 16px; line-height: 1.5;">
+    Merci d'avoir créé votre compte. Touchez le bouton ci-dessous pour confirmer votre adresse email
+    et commencer à utiliser le cahier de dettes de votre boutique.
+  </p>
+  <p style="margin: 28px 0;">
+    <a
+      href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email"
+      style="background: #0f6b4f; color: #ffffff; padding: 14px 24px; border-radius: 10px; text-decoration: none; font-size: 16px; font-weight: bold; display: inline-block;"
+      >Confirmer mon compte</a
+    >
+  </p>
+  <p style="font-size: 14px; line-height: 1.5; color: #4b5563;">
+    Si vous n'avez pas créé de compte BoutikDëkk, ignorez simplement cet email.
+  </p>
+</div>
