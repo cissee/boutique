@@ -1,5 +1,6 @@
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
+import { OfflineNavigationGuard } from "@/components/pwa/offline-navigation-guard";
 import { SyncManager } from "@/components/pwa/sync-manager";
 import { SideNav } from "@/components/layout/side-nav";
 
@@ -20,6 +21,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         <div>{children}</div>
       </main>
       <SyncManager />
+      <OfflineNavigationGuard />
       <BottomNav />
     </div>
   );

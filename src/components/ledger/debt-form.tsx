@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useActionState, useState, type FormEvent } from "react";
+import { useActionState, useState } from "react";
 import { FormAlert, SubmitButton, TextField } from "@/components/ui/form";
 import { getMessages } from "@/i18n";
 import { formatAmountInput } from "@/lib/format/currency";
+import { useLedgerSubmit } from "@/lib/offline/use-ledger-submit";
 import { recordDebt } from "@/server/actions/ledger";
 import { AmountChip, AmountInput } from "./amount-input";
 import { CustomerPicker, type PickerCustomer } from "./customer-picker";
@@ -17,23 +18,26 @@ type Props = {
   initialCustomerId: string | null;
   initialRequestId: string;
   today: string;
+  shopId: string;
 };
 
-export function DebtForm({ customers, initialCustomerId, initialRequestId, today }: Props) {
+export function DebtForm({ customers, initialCustomerId, initialRequestId, today, shopId }: Props) {
   const [state, formAction, pending] = useActionState(recordDebt, { requestId: initialRequestId });
-  const requestId = state.requestId ?? initialRequestId;
-
-  // Envoi manuel : React ne vide pas le formulaire après une erreur, la saisie est conservée.
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    startTransition(() => formAction(formData));
-  }
+  // Envoi manuel (la saisie est conservée après une erreur) ; sans réseau, file du téléphone.
+  const { requestId, onSubmit, offlineMessage, offlineError } = useLedgerSubmit({
+    kind: "DEBT",
+    state,
+    formAction,
+    initialRequestId,
+    shopId,
+    customers,
+  });
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
       <input type="hidden" name="requestId" value={requestId} />
-      {state.success && (
+      {offlineMessage && <FormAlert success={offlineMessage} />}
+      {!offlineMessage && state.success && (
         <div className="flex flex-col gap-2">
           <FormAlert success={state.success} />
           {state.customerId && (
@@ -43,7 +47,7 @@ export function DebtForm({ customers, initialCustomerId, initialRequestId, today
           )}
         </div>
       )}
-      <FormAlert error={state.error} />
+      <FormAlert error={offlineError ?? state.error} />
       {/* Nouvelle clé après chaque succès : les champs repartent à zéro pour la saisie suivante. */}
       <DebtFields
         key={requestId}

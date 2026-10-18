@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useActionState, useState, type FormEvent } from "react";
+import { useActionState, useState } from "react";
 import { FormAlert, SubmitButton, TextAreaField, TextField } from "@/components/ui/form";
 import { Money } from "@/components/ui/money";
 import { getMessages } from "@/i18n";
 import { formatAmountInput, formatFCFA, parseAmount } from "@/lib/format/currency";
 import { PAYMENT_METHODS } from "@/lib/ledger";
+import { useLedgerSubmit } from "@/lib/offline/use-ledger-submit";
 import { recordRepayment } from "@/server/actions/ledger";
 import { AmountChip, AmountInput } from "./amount-input";
 import { CustomerPicker, type PickerCustomer } from "./customer-picker";
@@ -20,22 +21,25 @@ type Props = {
   initialCustomerId: string | null;
   initialRequestId: string;
   today: string;
+  shopId: string;
 };
 
-export function RepaymentForm({ customers, initialCustomerId, initialRequestId, today }: Props) {
+export function RepaymentForm({ customers, initialCustomerId, initialRequestId, today, shopId }: Props) {
   const [state, formAction, pending] = useActionState(recordRepayment, { requestId: initialRequestId });
-  const requestId = state.requestId ?? initialRequestId;
-
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    startTransition(() => formAction(formData));
-  }
+  const { requestId, onSubmit, offlineMessage, offlineError } = useLedgerSubmit({
+    kind: "REPAYMENT",
+    state,
+    formAction,
+    initialRequestId,
+    shopId,
+    customers,
+  });
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
       <input type="hidden" name="requestId" value={requestId} />
-      {state.success && (
+      {offlineMessage && <FormAlert success={offlineMessage} />}
+      {!offlineMessage && state.success && (
         <div className="flex flex-col gap-3">
           <FormAlert success={state.success} />
           {state.receipt && <ReceiptButtons text={state.receipt.text} phone={state.receipt.phone} />}
@@ -46,7 +50,7 @@ export function RepaymentForm({ customers, initialCustomerId, initialRequestId, 
           )}
         </div>
       )}
-      <FormAlert error={state.error} />
+      <FormAlert error={offlineError ?? state.error} />
       <RepaymentFields
         key={requestId}
         customers={customers}

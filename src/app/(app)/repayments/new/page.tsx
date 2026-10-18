@@ -28,6 +28,7 @@ export default async function NewRepaymentPage({ searchParams }: PageProps<"/rep
         initialCustomerId={typeof customer === "string" ? customer : null}
         initialRequestId={crypto.randomUUID()}
         today={todayISODate()}
+        shopId={shop.id}
       />
     </>
   );

@@ -27,6 +27,7 @@ export default async function NewDebtPage({ searchParams }: PageProps<"/debts/ne
         initialCustomerId={typeof customer === "string" ? customer : null}
         initialRequestId={crypto.randomUUID()}
         today={todayISODate()}
+        shopId={shop.id}
       />
       <SnapshotSaver
         userId={user.id}
