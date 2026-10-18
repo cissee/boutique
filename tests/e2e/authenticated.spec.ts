@@ -26,7 +26,7 @@ test("connexion puis affichage de toutes les pages", async ({ page }) => {
   await page.getByLabel("Mot de passe").fill(TEST_USER_PASSWORD!);
   await page.getByRole("button", { name: "Se connecter" }).click();
 
-  await page.waitForURL("**/dashboard");
+  await page.waitForURL((url) => url.pathname === "/dashboard");
   await expect(page.getByText("Total des dettes")).toBeVisible();
   await expect(page.getByText("Cette page n'a pas pu s'afficher")).toHaveCount(0);
 

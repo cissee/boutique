@@ -217,6 +217,16 @@ export const fr = {
     reverseKeep: "Garder",
     reversed: "Opération annulée. Une écriture d'annulation a été ajoutée à l'historique.",
   },
+  receipt: {
+    /** {shop} {amount} {date} {method} — {method} est vide si le mode n'est pas précisé. */
+    received: "{shop} : remboursement de {amount} FCFA reçu le {date}{method}.",
+    remaining: "Reste à payer : {amount} FCFA. Merci !",
+    settled: "Votre compte est soldé. Merci !",
+    sendTitle: "Envoyer le reçu au client",
+    whatsapp: "WhatsApp",
+    sms: "SMS",
+    noPhone: "Pas de numéro enregistré : vous choisirez le destinataire.",
+  },
   transactions: {
     type: { DEBT: "Dette", REPAYMENT: "Remboursement", REVERSAL: "Annulation" },
     reversed: "Annulée",

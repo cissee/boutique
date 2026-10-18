@@ -217,4 +217,6 @@ Les textes sont regroupés dans [src/i18n/messages/fr.ts](src/i18n/messages/fr.t
 - [x] Étape 11 : rapports par période, export CSV (opérations, clients), relevé client PDF partageable
 - [x] Étape 12 : équipe (invitations de vendeurs par code ou lien WhatsApp, retrait, départ, choix de la boutique active)
 - [x] Étape 13 : mode hors ligne (service worker, consultation des soldes, file d'attente durable, synchronisation)
-- [ ] Ensuite : déploiement Vercel, wolof, création de client hors ligne
+- [x] Étape 14 : reçu de remboursement envoyé par WhatsApp ou SMS depuis le téléphone du boutiquier
+- [x] Déploiement Vercel : https://boutique-tau-five.vercel.app
+- [ ] Ensuite : SMS automatiques (option), paiement par lien Wave, wolof, création de client hors ligne

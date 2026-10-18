@@ -6,6 +6,7 @@ import { getMessages } from "@/i18n";
 import { requireShop } from "@/lib/auth/session";
 import { dbErrorMessage } from "@/lib/errors";
 import { formatFCFA } from "@/lib/format/currency";
+import { repaymentReceipt } from "@/lib/receipt";
 import { createClient } from "@/lib/supabase/server";
 import { invalidForm, type FormState } from "@/lib/validation/form-state";
 import { debtSchema, formFields, repaymentSchema, reversalSchema } from "@/lib/validation/schemas";
@@ -31,10 +32,11 @@ async function customerSummary(customerId: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("customer_balances")
-    .select("name, balance")
+    .select("name, phone, balance")
     .eq("customer_id", customerId)
     .maybeSingle();
-  return { name: data?.name ?? "", balance: formatFCFA(data?.balance ?? 0) };
+  const balance = Number(data?.balance ?? 0);
+  return { name: data?.name ?? "", phone: data?.phone ?? null, balance, formattedBalance: formatFCFA(balance) };
 }
 
 export async function recordDebt(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -60,14 +62,14 @@ export async function recordDebt(_prev: FormState, formData: FormData): Promise<
     success: t.ledger.debtSaved
       .replace("{amount}", formatFCFA(amount))
       .replace("{name}", summary.name)
-      .replace("{balance}", summary.balance),
+      .replace("{balance}", summary.formattedBalance),
     customerId,
     requestId: randomUUID(),
   };
 }
 
 export async function recordRepayment(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireShop();
+  const { shop } = await requireShop();
   const raw = formFields(formData, ["customerId", "amount", "paymentMethod", "comment", "date", "requestId"]);
   const parsed = repaymentSchema.safeParse(raw);
   if (!parsed.success) return { ...invalidForm(parsed.error, raw), requestId: raw.requestId };
@@ -94,9 +96,19 @@ export async function recordRepayment(_prev: FormState, formData: FormData): Pro
     success: t.ledger.repaymentSaved
       .replace("{amount}", formatFCFA(amount))
       .replace("{name}", summary.name)
-      .replace("{balance}", summary.balance),
+      .replace("{balance}", summary.formattedBalance),
     customerId,
     requestId: randomUUID(),
+    receipt: {
+      phone: summary.phone,
+      text: repaymentReceipt({
+        shopName: shop.name,
+        amount,
+        paymentMethod,
+        occurredAt: date,
+        remaining: summary.balance,
+      }),
+    },
   };
 }
 

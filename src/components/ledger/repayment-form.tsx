@@ -10,6 +10,7 @@ import { PAYMENT_METHODS } from "@/lib/ledger";
 import { recordRepayment } from "@/server/actions/ledger";
 import { AmountChip, AmountInput } from "./amount-input";
 import { CustomerPicker, type PickerCustomer } from "./customer-picker";
+import { ReceiptButtons } from "./receipt-buttons";
 
 const t = getMessages();
 
@@ -35,8 +36,9 @@ export function RepaymentForm({ customers, initialCustomerId, initialRequestId, 
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
       <input type="hidden" name="requestId" value={requestId} />
       {state.success && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <FormAlert success={state.success} />
+          {state.receipt && <ReceiptButtons text={state.receipt.text} phone={state.receipt.phone} />}
           {state.customerId && (
             <Link href={`/customers/${state.customerId}`} className="font-semibold text-brand underline-offset-4 hover:underline">
               {t.ledger.viewCustomer}

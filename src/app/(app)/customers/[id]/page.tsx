@@ -111,7 +111,11 @@ export default async function CustomerPage({ params }: PageProps<"/customers/[id
         <h2 className="text-lg font-bold">{t.customers.historyTitle}</h2>
         {transactions.length ? (
           <>
-            <TransactionList transactions={transactions} canReverse={role === "owner"} />
+            <TransactionList
+              transactions={transactions}
+              canReverse={role === "owner"}
+              receipts={{ shopName: shop.name, phone: customer.phone, currentBalance: customer.balance }}
+            />
             {transactions.length === CUSTOMER_HISTORY_LIMIT && (
               <p className="text-sm text-muted">
                 {t.customers.historyLimited.replace("{count}", String(CUSTOMER_HISTORY_LIMIT))}{" "}

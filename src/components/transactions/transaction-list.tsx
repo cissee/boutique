@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { ReceiptButtons } from "@/components/ledger/receipt-buttons";
 import { ReverseTransactionForm } from "@/components/ledger/reverse-transaction-form";
 import { Money } from "@/components/ui/money";
 import { getMessages } from "@/i18n";
 import { formatDateTime } from "@/lib/format/date";
+import { balancesAfter, repaymentReceipt } from "@/lib/receipt";
 import type { TransactionItem } from "@/server/queries/ledger";
 
 const t = getMessages();
@@ -14,14 +16,25 @@ function display(tx: TransactionItem): { sign: "+" | "−"; tone: "debt" | "repa
   return { sign, tone: tx.balance_effect > 0 ? "debt" : "repayment" };
 }
 
-/** `canReverse` : affiche le bouton d'annulation (propriétaire uniquement, revérifié côté serveur). */
+/** Contexte pour proposer un reçu sur chaque remboursement (liste d'un seul client). */
+export type ReceiptContext = { shopName: string; phone: string | null; currentBalance: number };
+
+/**
+ * `canReverse` : affiche le bouton d'annulation (propriétaire uniquement, revérifié côté serveur).
+ * `receipts` : liste des opérations d'UN client, des plus récentes aux plus anciennes et complète
+ * depuis la plus ancienne affichée ; le solde après chaque opération est alors recalculé exactement.
+ */
 export function TransactionList({
   transactions,
   canReverse = false,
+  receipts,
 }: {
   transactions: TransactionItem[];
   canReverse?: boolean;
+  receipts?: ReceiptContext;
 }) {
+  const balanceAfter = receipts ? balancesAfter(transactions, receipts.currentBalance) : new Map<string, number>();
+
   return (
     <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
       {transactions.map((tx) => {
@@ -54,6 +67,21 @@ export function TransactionList({
                 {formatDateTime(tx.occurred_at)}
                 {tx.createdByName && ` · ${t.customers.by.replace("{name}", tx.createdByName)}`}
               </span>
+              {receipts && tx.type === "REPAYMENT" && !tx.isReversed && (
+                <div className="mt-1">
+                  <ReceiptButtons
+                    compact
+                    phone={receipts.phone}
+                    text={repaymentReceipt({
+                      shopName: receipts.shopName,
+                      amount: tx.amount,
+                      paymentMethod: tx.payment_method,
+                      occurredAt: tx.occurred_at,
+                      remaining: balanceAfter.get(tx.id) ?? 0,
+                    })}
+                  />
+                </div>
+              )}
               {canReverse && tx.type !== "REVERSAL" && !tx.isReversed && (
                 <ReverseTransactionForm transactionId={tx.id} requestId={crypto.randomUUID()} />
               )}

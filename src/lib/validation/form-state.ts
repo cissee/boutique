@@ -17,6 +17,8 @@ export type FormState = {
   requestId?: string;
   /** Client concerné par la dernière opération réussie. */
   customerId?: string;
+  /** Reçu prêt à envoyer au client (remboursement). */
+  receipt?: { text: string; phone: string | null };
 };
 
 export const initialFormState: FormState = {};
