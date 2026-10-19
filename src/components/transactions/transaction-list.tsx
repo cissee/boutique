@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { CorrectTransactionForm } from "@/components/ledger/correct-transaction-form";
 import { ReceiptButtons } from "@/components/ledger/receipt-buttons";
 import { ReverseTransactionForm } from "@/components/ledger/reverse-transaction-form";
 import { Money } from "@/components/ui/money";
 import { getMessages } from "@/i18n";
 import { formatDateTime } from "@/lib/format/date";
+import { canCorrect } from "@/lib/ledger";
 import { balancesAfter, repaymentReceipt } from "@/lib/receipt";
 import type { TransactionItem } from "@/server/queries/ledger";
 
@@ -23,15 +25,18 @@ export type ReceiptContext = { shopName: string; phone: string | null; currentBa
  * `canReverse` : affiche le bouton d'annulation (propriétaire uniquement, revérifié côté serveur).
  * `receipts` : liste des opérations d'UN client, des plus récentes aux plus anciennes et complète
  * depuis la plus ancienne affichée ; le solde après chaque opération est alors recalculé exactement.
+ * `corrections` : affiche « Modifier » (propriétaire, ou auteur pendant 30 minutes).
  */
 export function TransactionList({
   transactions,
   canReverse = false,
   receipts,
+  corrections,
 }: {
   transactions: TransactionItem[];
   canReverse?: boolean;
   receipts?: ReceiptContext;
+  corrections?: { currentUserId: string; isOwner: boolean };
 }) {
   const balanceAfter = receipts ? balancesAfter(transactions, receipts.currentBalance) : new Map<string, number>();
 
@@ -44,11 +49,16 @@ export function TransactionList({
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="flex flex-wrap items-center gap-2">
                 <span className={`text-base font-semibold ${tx.isReversed ? "line-through" : ""}`}>
-                  {t.transactions.type[tx.type]}
+                  {tx.isCorrectionEntry ? t.ledger.correctionEntry : t.transactions.type[tx.type]}
                 </span>
                 {tx.isReversed && (
                   <span className="rounded-full bg-background px-2 py-0.5 text-xs font-semibold text-muted">
-                    {t.transactions.reversed}
+                    {tx.isCorrected ? t.ledger.correctedBadge : t.transactions.reversed}
+                  </span>
+                )}
+                {tx.replaces_transaction_id && (
+                  <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand-strong">
+                    {t.ledger.replacementBadge}
                   </span>
                 )}
                 {tx.payment_method && (
@@ -81,6 +91,9 @@ export function TransactionList({
                     })}
                   />
                 </div>
+              )}
+              {corrections && canCorrect(tx, corrections) && (
+                <CorrectTransactionForm transactionId={tx.id} currentAmount={tx.amount} requestId={crypto.randomUUID()} />
               )}
               {canReverse && tx.type !== "REVERSAL" && !tx.isReversed && (
                 <ReverseTransactionForm transactionId={tx.id} requestId={crypto.randomUUID()} />

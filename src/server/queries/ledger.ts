@@ -11,11 +11,18 @@ export type TransactionItem = Pick<
   | "description"
   | "payment_method"
   | "occurred_at"
+  | "created_at"
+  | "created_by"
   | "reversed_transaction_id"
+  | "replaces_transaction_id"
 > & {
   createdByName: string | null;
   /** Vrai si une annulation vise cette transaction. */
   isReversed: boolean;
+  /** Vrai si cette transaction a été remplacée par une correction de montant. */
+  isCorrected: boolean;
+  /** Vrai si cette ligne est l'annulation créée par une correction de montant. */
+  isCorrectionEntry: boolean;
   /** Renseigné pour les listes multi-clients (tableau de bord, historique). */
   customer: { id: string; name: string } | null;
 };
@@ -44,7 +51,7 @@ export async function queryTransactions(filters: TransactionFilters): Promise<{
   let query = supabase
     .from("ledger_transactions")
     .select(
-      "id, type, amount, balance_effect, description, payment_method, occurred_at, reversed_transaction_id, created_by, customer:customers(id, name)",
+      "id, type, amount, balance_effect, description, payment_method, occurred_at, created_at, reversed_transaction_id, replaces_transaction_id, created_by, customer:customers(id, name)",
     )
     .eq("shop_id", filters.shopId)
     .order("occurred_at", { ascending: false })
@@ -59,20 +66,26 @@ export async function queryTransactions(filters: TransactionFilters): Promise<{
   if (error) throw error;
 
   const rows = data.slice(0, filters.limit);
+  // Opérations dont on veut savoir si elles ont été annulées ou corrigées : celles de la page,
+  // plus les cibles des annulations de la page (pour reconnaître une annulation « de correction »).
   const ids = rows.map((tx) => tx.id);
-  const [reversedIds, names] = await Promise.all([
+  const targets = rows.map((tx) => tx.reversed_transaction_id).filter((id): id is string => id !== null);
+  const [reversedIds, correctedIds, names] = await Promise.all([
     getReversedIds(filters.shopId, ids),
+    getCorrectedIds(filters.shopId, [...ids, ...targets]),
     getMemberNames(rows.map((tx) => tx.created_by)),
   ]);
 
   return {
     hasMore: data.length > filters.limit,
-    items: rows.map(({ created_by, customer, ...tx }) => ({
+    items: rows.map(({ customer, ...tx }) => ({
       ...tx,
       amount: Number(tx.amount),
       balance_effect: Number(tx.balance_effect),
-      createdByName: names.get(created_by) ?? null,
+      createdByName: names.get(tx.created_by) ?? null,
       isReversed: reversedIds.has(tx.id),
+      isCorrected: correctedIds.has(tx.id),
+      isCorrectionEntry: tx.type === "REVERSAL" && tx.reversed_transaction_id !== null && correctedIds.has(tx.reversed_transaction_id),
       customer: filters.customerId ? null : customer,
     })),
   };
@@ -93,6 +106,19 @@ async function getReversedIds(shopId: string, ids: string[]): Promise<Set<string
     .in("reversed_transaction_id", ids);
   if (error) throw error;
   return new Set(data.map((r) => r.reversed_transaction_id).filter((id): id is string => id !== null));
+}
+
+/** Parmi `ids`, celles qui ont été remplacées par une correction de montant. */
+async function getCorrectedIds(shopId: string, ids: string[]): Promise<Set<string>> {
+  if (!ids.length) return new Set();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("ledger_transactions")
+    .select("replaces_transaction_id")
+    .eq("shop_id", shopId)
+    .in("replaces_transaction_id", [...new Set(ids)]);
+  if (error) throw error;
+  return new Set(data.map((r) => r.replaces_transaction_id).filter((id): id is string => id !== null));
 }
 
 /** Noms des membres de l'équipe (lisibles via la RLS « collègues »). */

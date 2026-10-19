@@ -9,7 +9,7 @@ import { formatFCFA } from "@/lib/format/currency";
 import { repaymentReceipt } from "@/lib/receipt";
 import { createClient } from "@/lib/supabase/server";
 import { invalidForm, type FormState } from "@/lib/validation/form-state";
-import { debtSchema, formFields, repaymentSchema, reversalSchema } from "@/lib/validation/schemas";
+import { correctionSchema, debtSchema, formFields, repaymentSchema, reversalSchema } from "@/lib/validation/schemas";
 
 /**
  * Opérations financières. Les montants et soldes sont toujours calculés par PostgreSQL
@@ -47,7 +47,7 @@ export async function recordDebt(_prev: FormState, formData: FormData): Promise<
 
   const { customerId, amount, description, date, requestId } = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.rpc("record_debt", {
+  const { data: tx, error } = await supabase.rpc("record_debt", {
     p_customer_id: customerId,
     p_amount: amount,
     p_client_request_id: requestId,
@@ -65,6 +65,9 @@ export async function recordDebt(_prev: FormState, formData: FormData): Promise<
       .replace("{balance}", summary.formattedBalance),
     customerId,
     requestId: randomUUID(),
+    transactionId: tx.id,
+    transactionAmount: amount,
+    correctionRequestId: randomUUID(),
   };
 }
 
@@ -76,7 +79,7 @@ export async function recordRepayment(_prev: FormState, formData: FormData): Pro
 
   const { customerId, amount, paymentMethod, comment, date, requestId } = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.rpc("record_repayment", {
+  const { data: tx, error } = await supabase.rpc("record_repayment", {
     p_customer_id: customerId,
     p_amount: amount,
     p_client_request_id: requestId,
@@ -99,6 +102,9 @@ export async function recordRepayment(_prev: FormState, formData: FormData): Pro
       .replace("{balance}", summary.formattedBalance),
     customerId,
     requestId: randomUUID(),
+    transactionId: tx.id,
+    transactionAmount: amount,
+    correctionRequestId: randomUUID(),
     receipt: {
       phone: summary.phone,
       text: repaymentReceipt({
@@ -132,4 +138,42 @@ export async function reverseTransaction(_prev: FormState, formData: FormData): 
 
   refresh();
   return { success: t.ledger.reversed, requestId: randomUUID() };
+}
+
+/**
+ * Correction du montant : annule l'opération et enregistre la bonne, en une seule fois
+ * (fonction PostgreSQL correct_transaction). Propriétaire toujours ; auteur pendant 30 minutes.
+ */
+export async function correctTransaction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireShop();
+  const raw = formFields(formData, ["transactionId", "amount", "reason", "requestId"]);
+  const parsed = correctionSchema.safeParse(raw);
+  if (!parsed.success) return { ...invalidForm(parsed.error, raw), requestId: raw.requestId };
+
+  const { transactionId, amount, reason, requestId } = parsed.data;
+  const supabase = await createClient();
+  const { data: original } = await supabase
+    .from("ledger_transactions")
+    .select("amount")
+    .eq("id", transactionId)
+    .maybeSingle();
+  const { data: fixed, error } = await supabase.rpc("correct_transaction", {
+    p_transaction_id: transactionId,
+    p_new_amount: amount,
+    p_client_request_id: requestId,
+    p_reason: reason,
+  });
+  if (error) return { error: ledgerErrorMessage(error), values: raw, requestId };
+
+  const summary = await customerSummary(fixed.customer_id);
+  refresh();
+  return {
+    success: t.ledger.corrected
+      .replace("{old}", formatFCFA(original?.amount ?? 0))
+      .replace("{new}", formatFCFA(amount))
+      .replace("{balance}", summary.formattedBalance),
+    customerId: fixed.customer_id,
+    transactionId: fixed.id,
+    requestId: randomUUID(),
+  };
 }

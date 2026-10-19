@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/customers/[id]">)
 
 export default async function CustomerPage({ params }: PageProps<"/customers/[id]">) {
   const { id } = await params;
-  const { shop, role } = await requireShop();
+  const { shop, role, user } = await requireShop();
   const customer = await getCustomer(shop.id, id);
   if (!customer) notFound();
 
@@ -115,6 +115,7 @@ export default async function CustomerPage({ params }: PageProps<"/customers/[id
               transactions={transactions}
               canReverse={role === "owner"}
               receipts={{ shopName: shop.name, phone: customer.phone, currentBalance: customer.balance }}
+              corrections={{ currentUserId: user.id, isOwner: role === "owner" }}
             />
             {transactions.length === CUSTOMER_HISTORY_LIMIT && (
               <p className="text-sm text-muted">

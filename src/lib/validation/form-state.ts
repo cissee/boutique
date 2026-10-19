@@ -17,6 +17,11 @@ export type FormState = {
   requestId?: string;
   /** Client concerné par la dernière opération réussie. */
   customerId?: string;
+  /** Opération créée par la dernière action réussie, et son montant. */
+  transactionId?: string;
+  transactionAmount?: number;
+  /** Clé d'idempotence d'une éventuelle correction de cette opération. */
+  correctionRequestId?: string;
   /** Reçu prêt à envoyer au client (remboursement). */
   receipt?: { text: string; phone: string | null };
 };

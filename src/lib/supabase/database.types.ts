@@ -19,6 +19,7 @@ type LedgerRow = {
   created_at: string;
   reversed_transaction_id: string | null;
   client_request_id: string;
+  replaces_transaction_id: string | null;
 };
 
 type ShopRow = {
@@ -245,6 +246,10 @@ export type Database = {
       accept_shop_invitation: {
         Args: { p_code: string };
         Returns: string;
+      };
+      correct_transaction: {
+        Args: { p_transaction_id: string; p_new_amount: number; p_client_request_id: string; p_reason?: string | null };
+        Returns: LedgerRow;
       };
       reverse_transaction: {
         Args: { p_transaction_id: string; p_reason: string; p_client_request_id: string };

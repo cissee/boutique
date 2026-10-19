@@ -491,6 +491,110 @@ describe("invitations de vendeurs", () => {
   });
 });
 
+describe("correction du montant (correct_transaction)", () => {
+  type Tx = { id: string; type: string; amount: string; replaces_transaction_id: string | null };
+  const correct = (userId: string, txId: string, amount: number, requestId = randomUUID(), reason?: string) =>
+    db
+      .as<Tx>(userId, "select * from public.correct_transaction($1, $2, $3, $4)", [txId, amount, requestId, reason ?? null])
+      .then((rows) => rows[0]);
+
+  it("dette saisie 800 au lieu de 900 : corrigée par son auteur, trace conservée", async () => {
+    const { seller, customerId } = await setupShop();
+    const wrong = await db.debt(seller, customerId, 800);
+
+    const fixed = await correct(seller, wrong.id, 900);
+
+    expect(fixed).toMatchObject({ type: "DEBT", replaces_transaction_id: wrong.id });
+    expect(Number(fixed.amount)).toBe(900);
+    expect(await db.balance(seller, customerId)).toBe(900);
+    const rows = await db.as<{ type: string; amount: string }>(
+      seller,
+      "select type, amount::text from public.ledger_transactions where customer_id = $1 order by created_at",
+      [customerId],
+    );
+    // L'originale (800) reste visible, avec son annulation et la nouvelle (900).
+    expect(rows.map((r) => `${r.type}:${r.amount}`).sort()).toEqual(["DEBT:800", "DEBT:900", "REVERSAL:800"]);
+  });
+
+  it("remboursement corrigé à la baisse : le solde remonte", async () => {
+    const { owner, seller, customerId } = await setupShop();
+    await db.debt(seller, customerId, 5000);
+    const repayment = await db.repay(seller, customerId, 3000);
+    await correct(owner, repayment.id, 2000);
+    expect(await db.balance(owner, customerId)).toBe(3000);
+  });
+
+  it("remboursement total corrigé à la baisse : jamais de solde négatif pendant l'opération", async () => {
+    const { owner, seller, customerId } = await setupShop();
+    await db.debt(seller, customerId, 1000);
+    const full = await db.repay(seller, customerId, 1000);
+    await correct(owner, full.id, 400);
+    expect(await db.balance(owner, customerId)).toBe(600);
+  });
+
+  it("rejouer la même correction ne crée rien de plus", async () => {
+    const { seller, customerId } = await setupShop();
+    const wrong = await db.debt(seller, customerId, 800);
+    const requestId = randomUUID();
+    const first = await correct(seller, wrong.id, 900, requestId);
+    const again = await correct(seller, wrong.id, 900, requestId);
+    expect(again.id).toBe(first.id);
+    expect(await db.ledgerSum(customerId)).toBe(900);
+  });
+
+  it("une opération ne se corrige qu'une fois (corriger ensuite la nouvelle)", async () => {
+    const { seller, customerId } = await setupShop();
+    const wrong = await db.debt(seller, customerId, 800);
+    const fixed = await correct(seller, wrong.id, 900);
+    await expect(correct(seller, wrong.id, 1000)).rejects.toThrow("already_reversed");
+    await correct(seller, fixed.id, 1000);
+    expect(await db.balance(seller, customerId)).toBe(1000);
+  });
+
+  it("refuse une correction qui rendrait le solde négatif", async () => {
+    const { owner, seller, customerId } = await setupShop();
+    const debt = await db.debt(seller, customerId, 1000);
+    await db.repay(seller, customerId, 1000);
+    await expect(correct(owner, debt.id, 500)).rejects.toThrow("correction_would_make_negative_balance");
+    expect(await db.balance(owner, customerId)).toBe(0);
+  });
+
+  it("refuse le même montant et un montant invalide", async () => {
+    const { seller, customerId } = await setupShop();
+    const debt = await db.debt(seller, customerId, 1000);
+    await expect(correct(seller, debt.id, 1000)).rejects.toThrow("same_amount");
+    await expect(correct(seller, debt.id, 0)).rejects.toThrow("invalid_amount");
+  });
+
+  it("vendeur : seulement ses propres saisies, et pendant 30 minutes", async () => {
+    const { owner, seller, shopId, customerId } = await setupShop();
+    const other = await db.createUser("Autre vendeur");
+    await db.addMember(shopId, other, "seller");
+
+    const bySeller = await db.debt(seller, customerId, 800);
+    await expect(correct(other, bySeller.id, 900)).rejects.toThrow("forbidden");
+
+    await db.admin("alter table public.ledger_transactions disable trigger ledger_no_update");
+    await db.admin("update public.ledger_transactions set created_at = now() - interval '31 minutes' where id = $1", [
+      bySeller.id,
+    ]);
+    await db.admin("alter table public.ledger_transactions enable trigger ledger_no_update");
+    await expect(correct(seller, bySeller.id, 900)).rejects.toThrow("forbidden");
+
+    // Le propriétaire peut toujours corriger.
+    await correct(owner, bySeller.id, 900);
+    expect(await db.balance(owner, customerId)).toBe(900);
+  });
+
+  it("une autre boutique ne peut rien corriger", async () => {
+    const a = await setupShop();
+    const debt = await db.debt(a.owner, a.customerId, 800);
+    const intruder = await db.createUser();
+    await db.createShop(intruder);
+    await expect(correct(intruder, debt.id, 900)).rejects.toThrow("transaction_not_found");
+  });
+});
+
 describe("isolation entre boutiques", () => {
   it("un utilisateur ne voit ni les clients, ni les transactions, ni les soldes d'une autre boutique", async () => {
     const a = await setupShop();

@@ -23,6 +23,8 @@ const dbErrors: Record<string, string> = {
   invalid_invitation: t.errors.invalidInvitation,
   already_member: t.errors.alreadyMember,
   last_owner: t.errors.lastOwner,
+  same_amount: t.errors.sameAmount,
+  correction_would_make_negative_balance: t.errors.correctionNegative,
 };
 
 /** Codes d'erreur Supabase Auth -> texte affiché. */

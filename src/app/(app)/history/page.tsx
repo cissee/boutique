@@ -55,7 +55,7 @@ function historyHref(filters: Partial<Filters>): string {
 }
 
 export default async function HistoryPage({ searchParams }: PageProps<"/history">) {
-  const { shop, role } = await requireShop();
+  const { shop, role, user } = await requireShop();
   const filters = parseFilters(await searchParams);
   const today = todayISODate();
 
@@ -174,7 +174,11 @@ export default async function HistoryPage({ searchParams }: PageProps<"/history"
       </details>
 
       {items.length ? (
-        <TransactionList transactions={items} canReverse={role === "owner"} />
+        <TransactionList
+          transactions={items}
+          canReverse={role === "owner"}
+          corrections={{ currentUserId: user.id, isOwner: role === "owner" }}
+        />
       ) : (
         <p className="rounded-2xl border border-dashed border-border bg-surface p-5 text-muted">{t.history.empty}</p>
       )}

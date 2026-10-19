@@ -218,6 +218,18 @@ export const fr = {
     reverseConfirm: "Confirmer l'annulation",
     reverseKeep: "Garder",
     reversed: "Opération annulée. Une écriture d'annulation a été ajoutée à l'historique.",
+    correct: "Modifier",
+    correctAfterSave: "Erreur de montant ? Modifier",
+    correctTitle: "Corriger le montant",
+    correctCurrent: "Montant enregistré : {amount}",
+    correctNewAmount: "Bon montant (FCFA)",
+    correctReason: "Raison",
+    correctReasonHint: "Ex. faute de frappe",
+    correctSubmit: "Enregistrer la correction",
+    corrected: "Montant corrigé : {old} → {new}. Nouveau solde : {balance}.",
+    correctedBadge: "Corrigée",
+    correctionEntry: "Correction",
+    replacementBadge: "Montant corrigé",
   },
   receipt: {
     /** {shop} {amount} {date} {method} — {method} est vide si le mode n'est pas précisé. */
@@ -354,6 +366,9 @@ export const fr = {
     invalidInvitation: "Code invalide, expiré ou déjà utilisé. Demandez un nouveau code au propriétaire.",
     alreadyMember: "Vous faites déjà partie de cette boutique.",
     lastOwner: "La boutique doit garder au moins un propriétaire.",
+    sameAmount: "Le nouveau montant est identique à l'ancien.",
+    correctionNegative:
+      "Correction impossible : le client a déjà remboursé plus que ce nouveau montant. Corrigez d'abord le remboursement.",
   },
 } as const;
 

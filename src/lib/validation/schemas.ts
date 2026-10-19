@@ -118,6 +118,13 @@ export const repaymentSchema = z.object({
   requestId: uuid,
 });
 
+export const correctionSchema = z.object({
+  transactionId: uuid,
+  amount,
+  reason: optionalText(500),
+  requestId: uuid,
+});
+
 export const reversalSchema = z.object({
   transactionId: uuid,
   reason: requiredText(500),
