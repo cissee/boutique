@@ -18,6 +18,7 @@ test("dette saisie 800 au lieu de 900 : bouton Modifier, solde et historique cor
   await page.getByLabel("Mot de passe", { exact: true }).fill(TEST_USER_PASSWORD!);
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL((u) => u.pathname === "/settings");
+  await expect(page.getByRole("heading", { level: 2, name: "Mon profil" })).toBeVisible();
 
   // Bascule sur la boutique de test (jamais la boutique réelle).
   const testShop = page.getByRole("listitem").filter({ hasText: TEST_SHOP });
@@ -39,7 +40,7 @@ test("dette saisie 800 au lieu de 900 : bouton Modifier, solde et historique cor
   const customerUrl = new URL(page.url()).pathname;
 
   // Dette saisie avec une erreur : 800 au lieu de 900.
-  await page.getByRole("link", { name: "Ajouter une dette" }).click();
+  await page.getByRole("main").getByRole("link", { name: "Ajouter une dette" }).click();
   await page.getByLabel("Montant (FCFA)").fill("800");
   await page.getByRole("button", { name: "Enregistrer la dette" }).click();
   await expect(page.getByText(/Dette de 800\sFCFA enregistrée/)).toBeVisible();
