@@ -48,3 +48,6 @@ supabase/.temp
 # playwright
 /test-results/
 /playwright-report/
+
+# vidéos de démonstration (brutes)
+/video-raw/
