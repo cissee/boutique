@@ -16,6 +16,7 @@ import {
   offlineStore,
   runSync,
   subscribeOffline,
+  useBrowserOnline,
   usePendingOperations,
 } from "@/lib/offline/client";
 import { pendingEffect } from "@/lib/offline/sync";
@@ -45,7 +46,8 @@ function useSnapshot(): CustomerSnapshot | null | undefined {
 export function OfflineApp() {
   const snapshot = useSnapshot();
   const ops = usePendingOperations();
-  const isOffline = useOffline();
+  const browserOnline = useBrowserOnline();
+  const isOffline = useOffline() || !browserOnline;
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);

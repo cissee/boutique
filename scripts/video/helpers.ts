@@ -19,19 +19,34 @@ export async function record(page: Page, name: string, scenario: () => Promise<v
   mkdirSync(OUT_DIR, { recursive: true });
 
   const viewport = page.viewportSize() ?? { width: 432, height: 768 };
-  const clip = { x: 0, y: 0, width: viewport.width, height: viewport.height, scale: 1080 / viewport.width };
-  const cdp = await page.context().newCDPSession(page);
+  const scale = 1080 / viewport.width;
+  let cdp = await page.context().newCDPSession(page);
   const frames: { file: string; ts: number }[] = [];
   let recording = true;
+
+  // Une capture peut ne jamais répondre pendant un changement de page (surtout hors ligne) :
+  // délai maximal, puis nouvelle session CDP pour repartir proprement.
+  const withTimeout = <T,>(promise: Promise<T>, ms: number) =>
+    Promise.race([promise, new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms))]);
 
   const capture = (async () => {
     while (recording) {
       try {
-        const shot = await cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 90, optimizeForSpeed: true, clip });
+        // La zone de capture se repère dans la page : on suit la position de défilement.
+        const { cssVisualViewport: v } = await withTimeout(cdp.send("Page.getLayoutMetrics"), 1500);
+        const clip = { x: v.pageX, y: v.pageY, width: viewport.width, height: viewport.height, scale };
+        const shot = await withTimeout(
+          cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 90, optimizeForSpeed: true, clip }),
+          1500,
+        );
         const file = path.join(frameDir, `${String(frames.length).padStart(6, "0")}.jpg`);
         writeFileSync(file, Buffer.from(shot.data, "base64"));
         frames.push({ file, ts: Date.now() / 1000 });
-      } catch {
+      } catch (error) {
+        if (error instanceof Error && error.message === "timeout") {
+          cdp.detach().catch(() => undefined);
+          cdp = await page.context().newCDPSession(page).catch(() => cdp);
+        }
         // Page en cours de navigation : on réessaie juste après.
         await new Promise((r) => setTimeout(r, 30));
       }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { createIndexedDbStore, type OfflineStore } from "./store";
 import { syncPending, type SyncReport } from "./sync";
 import type { PendingOperation, SyncResult } from "./types";
@@ -102,4 +102,24 @@ export function runSync(execute: (op: PendingOperation) => Promise<SyncResult>):
 export async function clearOfflineData(): Promise<void> {
   await offlineStore()?.clearAll();
   notifyOfflineChange();
+}
+
+/**
+ * État réseau du navigateur (événements online/offline). useOffline de Next.js ne passe à
+ * « hors ligne » qu'après une requête échouée : une page servie par le service worker sans
+ * réseau doit aussi tenir compte de navigator.onLine.
+ */
+export function useBrowserOnline(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      window.addEventListener("online", onChange);
+      window.addEventListener("offline", onChange);
+      return () => {
+        window.removeEventListener("online", onChange);
+        window.removeEventListener("offline", onChange);
+      };
+    },
+    () => navigator.onLine,
+    () => true,
+  );
 }

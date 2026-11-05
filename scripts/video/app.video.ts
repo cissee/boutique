@@ -165,9 +165,10 @@ test("10-inviter-un-vendeur", async ({ page }) => {
     await team.scrollIntoViewIfNeeded();
     await scrollSmooth(page, 120);
     await pause(page, 2500);
-    await tap(page, page.getByRole("button", { name: "Inviter un vendeur" }), 2500);
-    await page.getByText("Code d'invitation").scrollIntoViewIfNeeded();
-    await pause(page, 4000);
+    await tap(page, page.getByRole("button", { name: "Inviter un vendeur" }), 2000);
+    await page.getByRole("link", { name: /Envoyer par WhatsApp/ }).scrollIntoViewIfNeeded();
+    await scrollSmooth(page, 120);
+    await pause(page, 4500);
   });
   // Ménage : on révoque les invitations créées pour la vidéo.
   for (const revoke of await page.getByRole("button", { name: "Révoquer" }).all()) await revoke.click();
@@ -177,23 +178,32 @@ test("11-mode-hors-ligne", async ({ page, context }) => {
   await login(page);
   await expect(page.getByText("Total des dettes")).toBeVisible();
   // Laisse le service worker et la copie locale des clients se mettre en place.
-  await page.waitForTimeout(4000);
+  await page.waitForTimeout(5000);
   await record(page, "11-mode-hors-ligne", async () => {
     await pause(page, 1500);
+    // Coupure d'Internet : « + Dette » ouvre le mode hors ligne.
     await context.setOffline(true);
-    await tap(page, page.getByRole("link", { name: "Ajouter une dette" }).last(), 1500);
     await pause(page, 1500);
+    await tap(page, page.getByRole("link", { name: "Ajouter une dette" }).last(), 2500);
+    await expect(page.getByRole("heading", { name: "Mode hors ligne" })).toBeVisible();
+    await pause(page, 2500);
     await typeSlow(page, page.getByRole("searchbox"), "cheikh");
-    await tap(page, page.getByRole("button", { name: /Cheikh Ndour/ }), 1000);
-    await tap(page, page.getByRole("button", { name: /^1\s000$/ }), 900);
-    await tap(page, page.getByRole("button", { name: "Enregistrer la dette" }), 2500);
+    await tap(page, page.getByRole("button", { name: /Cheikh Ndour/ }), 1200);
+    await typeSlow(page, page.getByLabel("Montant (FCFA)"), "1000", 160);
+    await typeSlow(page, page.getByRole("textbox", { name: /Description/ }), "Pain");
+    await tap(page, page.getByRole("button", { name: "Enregistrer hors ligne" }), 2000);
     await expect(page.getByText("Enregistré sur le téléphone")).toBeVisible();
-    await pause(page, 3000);
+    await expect(page.getByText("En attente d'envoi")).toBeVisible();
+    await pause(page, 3500);
+    // Retour d'Internet : l'opération part toute seule.
     await context.setOffline(false);
-    await page.dispatchEvent("body", "click").catch(() => undefined);
     await page.evaluate(() => window.dispatchEvent(new Event("online")));
-    await pause(page, 6000);
+    await expect(page.getByText("Internet est revenu.")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("En attente d'envoi")).toHaveCount(0, { timeout: 30_000 });
+    await pause(page, 2500);
+    await tap(page, page.getByRole("link", { name: /Retour à l'application/ }), 2500);
     await page.goto("/history");
+    await expect(page.getByText("Cheikh Ndour").first()).toBeVisible();
     await pause(page, 4000);
   });
 });

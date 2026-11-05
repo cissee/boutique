@@ -63,6 +63,8 @@ test("sans réseau : l'application s'ouvre, affiche les soldes et garde les sais
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "Mode hors ligne" })).toBeVisible();
   await expect(page.getByText("Boutique Chez Modou")).toBeVisible();
+  // Page servie par le service worker sans réseau : ne pas annoncer le retour d'Internet.
+  await expect(page.getByText("Internet est revenu.")).toHaveCount(0);
 
   // Recherche sans accent dans les soldes du dernier chargement.
   await page.getByRole("searchbox").fill("ndeye");
